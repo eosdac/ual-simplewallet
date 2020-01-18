@@ -11,7 +11,7 @@ export class SimpleWallet extends Authenticator {
     public chains: Chain[];
     public options: any;
     private users: SimpleWalletUser[] = [];
-    private simpleWallet: any = null;
+    private simplewallet: any = null;
     // private pubKeys: [];
     appName = 'SimpleWallet';
     lastError = null;
@@ -24,7 +24,8 @@ export class SimpleWallet extends Authenticator {
 
         this.chains = chains;
         this.options = options;
-        this.simpleWallet = options.simpleWallet;
+        console.log(this.simplewallet);
+        this.simplewallet = options.simplewallet;
     }
 
     /**
@@ -130,7 +131,7 @@ export class SimpleWallet extends Authenticator {
             //     const user = new SimpleWalletUser(chain, this.accountName, this.pubKeys);
             //     this.users.push(user);
             // }
-            this.users = await this.simpleWallet.login();
+            this.users = await this.simplewallet.login();
 
             console.log(`SimpleWallet: users`, this.users);
 

@@ -20,6 +20,7 @@ export class SimpleWalletUser extends User {
    * @param transaction  The transaction to be signed (a object that matches the RpcAPI structure).
    */
   async signTransaction(_transaction, _options) {
+    console.log(`SimpleWallet sign request`, _transaction)
     // return this.wax.api.transact(transaction, {blocksBehind: 3, expireSeconds: 30});
     return new Promise<SignTransactionResponse>((_resolve, _reject) => {
 

@@ -7,7 +7,28 @@ import * as WebSocket from 'websocket';
 import * as http from 'http';
 
 const host = '0.0.0.0';
-const port = 8877
+const port = 8877;
+
+const connections = new Map();
+
+class WSClientConnection {
+    private connection: any;
+    private uuid: any;
+    constructor (connection, uuid) {
+        this.connection = connection;
+        this.uuid = uuid;
+        console.log(this.uuid, this.connection);
+    }
+
+    setUUID (uuid) {
+        this.uuid = uuid;
+        connections.set(uuid, this);
+    }
+
+    send (data) {
+        this.connection.sendUTF(data);
+    }
+}
 
 const server = http.createServer(function(request, response) {
     // console.log(request);
@@ -18,7 +39,18 @@ const server = http.createServer(function(request, response) {
         body.push(chunk);
     }).on('end', () => {
         const bodyStr = Buffer.concat(body).toString();
-        console.log(`${method} ${url} ${bodyStr}`)
+        if (bodyStr && method === 'POST'){
+            console.log(`${method} ${url} ${bodyStr}`);
+
+            const bodyObj = JSON.parse(bodyStr);
+            const uuid = bodyObj.actionId;
+
+            const connection = connections.get(uuid);
+            if (connection){
+                console.log(`Have connection, relaying`);
+                connection.send(bodyStr);
+            }
+        }
 
         response.writeHead(200, {
             "Content-Type": "text/plain"
@@ -36,12 +68,21 @@ const wsServer = new WebSocket.server({
     httpServer: server
 });
 
+const receiveWSMessage = (connection) => {
+    console.log(`Received WS message`);
+    return (message) => {
+        if (message.type === 'utf8') {
+            const msgObj = JSON.parse(message.utf8Data);
+            connection.setUUID(msgObj.uuid);
+            console.log('Received Message: ', msgObj);
+            connection.send(message.utf8Data);
+        }
+    }
+};
+
 // WebSocket server
-wsServer.on('request', (_request) => {
-    // console.log(`Got request`, req.message.utf8Data, data);
-    // const connection = request.accept();
-    // connections.push(connection);
-    //
-    // console.log((new Date()) + ' Connection accepted.');
-    // connection.on('message', receiveWSMessage(connection));
+wsServer.on('request', (request) => {
+    const connection = request.accept();
+    console.log((new Date()) + ' Connection accepted.');
+    connection.on('message', receiveWSMessage(new WSClientConnection(connection, null)));
 });
